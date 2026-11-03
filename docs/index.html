@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#174e43" />
+    <meta
+      name="description"
+      content="PairLab is a pairs trading research project by Ayan Safe. Explore formation-only hedge ratios, historical backtests, execution costs, and individual trades."
+    />
+    <title>PairLab — Pairs Trading Research</title>
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./assets/style.css" />
+    <script type="module" src="./assets/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#workbench">Skip to workbench</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="#" aria-label="PairLab home">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M4 23 11 14 18 18 28 6M4 7 11 17 18 13 28 25" />
+            <circle cx="4" cy="23" r="2" />
+            <circle cx="28" cy="6" r="2" />
+          </svg>
+          PairLab<span class="brand-divider"></span
+          ><span class="brand-caption">a research project</span>
+        </a>
+        <nav aria-label="Main navigation">
+          <a class="nav-active" href="#workbench">Workbench</a>
+          <a href="#methodology">Methodology</a>
+          <a href="#notes">Notes</a>
+          <a
+            class="source-link"
+            href="https://github.com/Safe982/pairlab"
+            target="_blank"
+            rel="noopener noreferrer"
+            >View source <span aria-hidden="true">↗</span></a
+          >
+        </nav>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <div class="eyebrow">
+            <span class="tiny-line"></span> STATISTICAL ARBITRAGE / RESEARCH 01
+          </div>
+          <h1 id="page-title">Pairs trading workbench<span>.</span></h1>
+          <p>
+            Two related assets. One testable idea. Explore the spread, run a
+            backtest,<br class="desktop-break" />
+            and see what survives trading costs.
+          </p>
+          <div class="byline">
+            <span class="author-avatar">AS</span
+            ><span>Built by <strong>Ayan Safe</strong></span
+            ><span class="byline-dot">·</span
+            ><span>UMass Amherst · CS + Economics</span>
+          </div>
+        </div>
+        <div class="snapshot-label">
+          <span class="status-dot"></span><strong>2020 — 2024</strong
+          ><span>Daily adjusted closes</span
+          ><small>Historical snapshot · no live trading</small>
+        </div>
+      </section>
+
+      <section id="workbench" aria-label="Pairs trading workbench">
+        <div class="section-overline">
+          <span>01 / CHOOSE A PAIR</span
+          ><span id="data-count">Loading historical data…</span>
+        </div>
+        <div
+          class="pair-grid"
+          id="pair-grid"
+          role="group"
+          aria-label="Example pairs"
+        ></div>
+
+        <div class="workspace">
+          <aside class="settings-panel">
+            <div class="panel-heading">
+              <h2>Strategy settings</h2>
+              <button type="button" id="reset" class="text-button">
+                Reset
+              </button>
+            </div>
+            <form id="strategy-form">
+              <label class="field"
+                >Formation period
+                <span class="field-help"
+                  >Fit the hedge ratio on these first observations.</span
+                >
+                <select id="formation" name="formation">
+                  <option value="504">504 sessions · ~2 years</option>
+                  <option value="252">252 sessions · ~1 year</option>
+                </select>
+              </label>
+              <label class="field"
+                >Z-score lookback
+                <span class="input-unit"
+                  ><input
+                    id="lookback"
+                    name="lookback"
+                    type="number"
+                    min="5"
+                    max="200"
+                    step="1"
+                    value="60"
+                    required
+                  /><span>sessions</span></span
+                ></label
+              >
+              <div class="field-row">
+                <label class="field"
+                  >Entry threshold
+                  <span class="input-unit"
+                    ><input
+                      id="entry"
+                      name="entry"
+                      type="number"
+                      min="0.5"
+                      max="5"
+                      step="0.1"
+                      value="2"
+                      required
+                    /><span>σ</span></span
+                  ></label
+                >
+                <label class="field"
+                  >Exit threshold
+                  <span class="input-unit"
+                    ><input
+                      id="exit"
+                      name="exit"
+                      type="number"
+                      min="0"
+                      max="3"
+                      step="0.1"
+                      value="0.5"
+                      required
+                    /><span>σ</span></span
+                  ></label
+                >
+              </div>
+              <div class="threshold-guide" aria-hidden="true">
+                <i></i><span>Enter at ±2σ · exit near the mean</span>
+              </div>
+              <label class="field cost-field"
+                >Cost per side
+                <span class="input-unit"
+                  ><input
+                    id="costBps"
+                    name="costBps"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value="5"
+                    required
+                  /><span>bps</span></span
+                ><span class="field-help"
+                  >Combined fee + slippage on traded notional.</span
+                ></label
+              >
+              <details class="advanced-settings">
+                <summary>
+                  Risk &amp; sizing <span aria-hidden="true">+</span>
+                </summary>
+                <div class="advanced-body">
+                  <label class="field"
+                    >Z-score stop
+                    <span class="input-unit"
+                      ><input
+                        id="stop"
+                        name="stop"
+                        type="number"
+                        min="1"
+                        max="10"
+                        step="0.1"
+                        value="4"
+                        required
+                      /><span>σ</span></span
+                    ></label
+                  >
+                  <label class="field"
+                    >Maximum hold
+                    <span class="input-unit"
+                      ><input
+                        id="maxHold"
+                        name="maxHold"
+                        type="number"
+                        min="1"
+                        max="252"
+                        step="1"
+                        value="40"
+                        required
+                      /><span>sessions</span></span
+                    ></label
+                  >
+                  <label class="field"
+                    >Annual short borrow
+                    <span class="input-unit"
+                      ><input
+                        id="borrowPct"
+                        name="borrowPct"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.5"
+                        value="2"
+                        required
+                      /><span>% / year</span></span
+                    ></label
+                  >
+                  <label class="field"
+                    >Initial capital
+                    <span class="input-unit"
+                      ><span>$</span
+                      ><input
+                        id="capital"
+                        name="capital"
+                        type="number"
+                        min="1000"
+                        max="10000000"
+                        step="1000"
+                        value="100000"
+                        required /></span
+                  ></label>
+                  <p>
+                    100% gross notional at entry. Fixed shares per trade; gross
+                    exposure drifts with prices. No leverage target or cash
+                    interest.
+                  </p>
+                </div>
+              </details>
+              <button class="primary-button" id="run" type="submit">
+                <span aria-hidden="true">▷</span> Run backtest
+                <span aria-hidden="true">↗</span>
+              </button>
+              <div
+                class="run-status"
+                id="run-status"
+                role="status"
+                aria-live="polite"
+              >
+                Ready to run
+              </div>
+            </form>
+            <div class="timing-note">
+              <span class="mini-icon" aria-hidden="true">↳</span>
+              <p>
+                Signal at today's close.<br /><strong
+                  >Execution at the next close.</strong
+                >
+              </p>
+            </div>
+            <details class="import-details">
+              <summary>
+                Use your own data <span aria-hidden="true">↗</span>
+              </summary>
+              <p>
+                Upload a CSV with exactly <code>Date,ASSET_A,ASSET_B</code> and
+                at least 300 aligned rows. Prices should be split- and
+                dividend-adjusted. The file stays in your browser.
+              </p>
+              <label class="upload-label" for="csv-file"
+                >Choose CSV<input
+                  id="csv-file"
+                  type="file"
+                  accept=".csv,text/csv" /></label
+              ><a href="./data/example.csv" download>Download CSV template ↓</a
+              ><button
+                class="text-button"
+                id="clear-import"
+                type="button"
+                hidden
+              >
+                Return to example pairs
+              </button>
+            </details>
+          </aside>
+
+          <div class="results-area" id="results-area" aria-busy="true">
+            <div class="workspace-bar">
+              <div class="tab-list" role="tablist" aria-label="Research views">
+                <button
+                  id="tab-backtest"
+                  role="tab"
+                  aria-selected="true"
+                  aria-controls="view-backtest"
+                  tabindex="0"
+                >
+                  Backtest</button
+                ><button
+                  id="tab-diagnostics"
+                  role="tab"
+                  aria-selected="false"
+                  aria-controls="view-diagnostics"
+                  tabindex="-1"
+                >
+                  Pair diagnostics</button
+                ><button
+                  id="tab-trades"
+                  role="tab"
+                  aria-selected="false"
+                  aria-controls="view-trades"
+                  tabindex="-1"
+                >
+                  Trade log <span id="trade-count" class="count-badge">—</span>
+                </button>
+              </div>
+              <button id="export" class="export-button" type="button" disabled>
+                <span aria-hidden="true">↓</span> Export
+              </button>
+            </div>
+            <div
+              id="error-banner"
+              class="error-banner"
+              role="alert"
+              hidden
+            ></div>
+            <div id="stale-banner" class="stale-banner" hidden>
+              Settings changed. Run the backtest to update these results.
+            </div>
+            <div class="test-period">
+              <span class="status-dot"></span
+              ><span id="test-period">Preparing test period…</span
+              ><span class="muted" id="execution-label"
+                >NEXT-CLOSE EXECUTION</span
+              >
+            </div>
+
+            <section
+              id="view-backtest"
+              role="tabpanel"
+              aria-labelledby="tab-backtest"
+            >
+              <div class="metric-grid" id="metric-grid"></div>
+              <div class="chart-card">
+                <div class="chart-heading">
+                  <div>
+                    <h2 id="equity-title">Out-of-sample equity</h2>
+                    <p id="equity-subtitle">
+                      After trading and short-borrow costs
+                    </p>
+                  </div>
+                  <div class="segmented" aria-label="Performance chart">
+                    <button
+                      class="active"
+                      data-chart="equity"
+                      type="button"
+                      aria-pressed="true"
+                    >
+                      Equity</button
+                    ><button
+                      data-chart="drawdown"
+                      type="button"
+                      aria-pressed="false"
+                    >
+                      Drawdown
+                    </button>
+                  </div>
+                </div>
+                <div class="chart-legend" id="equity-legend">
+                  <span><i class="legend-line"></i>Pair strategy</span
+                  ><span
+                    ><i class="legend-line benchmark"></i>50/50 long-only
+                    pair</span
+                  ><span class="chart-note">$100k initial capital</span>
+                </div>
+                <div
+                  id="equity-chart"
+                  class="chart-container main-chart"
+                  aria-live="off"
+                >
+                  <div class="loading-state">Loading the price snapshot…</div>
+                </div>
+                <div class="chart-footer">
+                  <span id="chart-caption">Full test period</span>
+                  <div class="range-switch" aria-label="Chart date range">
+                    <button
+                      class="active"
+                      data-range="all"
+                      type="button"
+                      aria-pressed="true"
+                    >
+                      All</button
+                    ><button data-range="1y" type="button" aria-pressed="false">
+                      1Y</button
+                    ><button data-range="6m" type="button" aria-pressed="false">
+                      6M
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="chart-card signal-card">
+                <div class="chart-heading">
+                  <div>
+                    <h2>Spread z-score</h2>
+                    <p>
+                      Distance from the preceding rolling mean, in standard
+                      deviations
+                    </p>
+                  </div>
+                  <div class="chart-legend">
+                    <span><i class="legend-triangle"></i>Entry</span
+                    ><span><i class="legend-exit"></i>Exit</span>
+                  </div>
+                </div>
+                <div id="z-chart" class="chart-container signal-chart"></div>
+                <div class="signal-footer">
+                  <span><i class="legend-dash"></i>Entry bands</span
+                  ><span>Markers show execution dates, not signal dates.</span>
+                </div>
+              </div>
+              <div class="research-observation" id="observation"></div>
+              <details class="sensitivity-section">
+                <summary>
+                  Parameter sensitivity
+                  <span class="muted">9 exploratory runs</span
+                  ><span aria-hidden="true">+</span>
+                </summary>
+                <p>
+                  Net return for nearby entry thresholds and lookbacks. This
+                  reuses the test period: it is an exploration, not fresh
+                  validation or a recommendation.
+                </p>
+                <div id="sensitivity-grid"></div>
+              </details>
+            </section>
+
+            <section
+              id="view-diagnostics"
+              role="tabpanel"
+              aria-labelledby="tab-diagnostics"
+              hidden
+            >
+              <div class="diagnostic-intro">
+                <span class="eyebrow">FIT FIRST. TEST LATER.</span>
+                <h2>Does the pair hold together?</h2>
+                <p>
+                  The hedge ratio and statistical tests use only the formation
+                  period. A strong correlation alone does not establish
+                  cointegration.
+                </p>
+              </div>
+              <div class="diagnostic-grid" id="diagnostic-grid"></div>
+              <div class="chart-card">
+                <div class="chart-heading">
+                  <div>
+                    <h2>Price paths, normalized to 100</h2>
+                    <p id="price-subtitle"></p>
+                  </div>
+                </div>
+                <div class="chart-legend" id="price-legend"></div>
+                <div id="price-chart" class="chart-container main-chart"></div>
+                <div class="chart-footer">
+                  <span>Shaded region = formation period</span
+                  ><span>Index rebased at first snapshot close</span>
+                </div>
+              </div>
+              <div id="diagnostic-verdict" class="diagnostic-verdict"></div>
+              <div class="equation-card">
+                <span>THE MODEL</span
+                ><code>spreadₜ = log(Aₜ) − α − β · log(Bₜ)</code>
+                <p>
+                  Fit α and β once using formation prices. Standardize each
+                  later residual against the <em>preceding</em> lookback window.
+                  Long the spread when z is sufficiently negative; short it when
+                  z is sufficiently positive.
+                </p>
+              </div>
+            </section>
+
+            <section
+              id="view-trades"
+              role="tabpanel"
+              aria-labelledby="tab-trades"
+              hidden
+            >
+              <div class="trade-heading">
+                <div>
+                  <h2>Every round trip, accounted for.</h2>
+                  <p id="trade-summary">Closed trades, net of costs.</p>
+                </div>
+                <label class="filter-label"
+                  >Show<select id="trade-filter">
+                    <option value="all">All trades</option>
+                    <option value="wins">Winners</option>
+                    <option value="losses">Losses &amp; flat</option>
+                  </select></label
+                >
+              </div>
+              <div class="table-scroll">
+                <table class="trade-table">
+                  <caption class="sr-only">
+                    Backtest trade ledger with net profit after execution and
+                    borrowing costs
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">Position</th>
+                      <th scope="col">Entry / exit</th>
+                      <th scope="col">Hold</th>
+                      <th scope="col">Signal z</th>
+                      <th scope="col">Net P&amp;L</th>
+                      <th scope="col">Exit reason</th>
+                    </tr>
+                  </thead>
+                  <tbody id="trade-body"></tbody>
+                </table>
+              </div>
+              <div class="pagination">
+                <span id="page-label"></span>
+                <div>
+                  <button
+                    id="previous-page"
+                    type="button"
+                    aria-label="Previous page"
+                  >
+                    ←</button
+                  ><button id="next-page" type="button" aria-label="Next page">
+                    →
+                  </button>
+                </div>
+              </div>
+              <p class="ledger-note">
+                Hold is measured in trading sessions. Borrow accrues over
+                calendar days. Signal z is observed one session before entry;
+                execution prices can differ. The last open trade is closed at
+                the final sample close.
+              </p>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="methodology-section"
+        id="methodology"
+        aria-labelledby="methodology-title"
+      >
+        <div class="section-overline">
+          <span>02 / METHODOLOGY</span
+          ><a
+            href="https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.coint.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Engle–Granger reference ↗</a
+          >
+        </div>
+        <div class="methodology-header">
+          <h2 id="methodology-title">
+            An idea is only as good<br />as the way you test it.
+          </h2>
+          <p>
+            Pairs trading assumes a relationship can pull back toward its
+            historical range. This project asks where that assumption holds—and
+            where it breaks.
+          </p>
+        </div>
+        <div class="method-grid">
+          <article>
+            <span class="step-number">01</span>
+            <h3>Form the pair</h3>
+            <p>
+              Regress log(A) on log(B) using only the first 252 or 504 sessions.
+              Freeze the intercept and hedge ratio. Inspect the formation-period
+              Engle–Granger test.
+            </p>
+          </article>
+          <article>
+            <span class="step-number">02</span>
+            <h3>Observe the spread</h3>
+            <p>
+              Calculate a z-score using a rolling window that excludes today's
+              residual. An entry requires |z| above the entry band and below the
+              stop band.
+            </p>
+          </article>
+          <article>
+            <span class="step-number">03</span>
+            <h3>Trade a day later</h3>
+            <p>
+              Execute at the next close with 100% gross notional at entry,
+              allocated in a 1:β dollar ratio. Keep shares fixed. Exit on
+              reversion, a stop, or a time limit.
+            </p>
+          </article>
+          <article>
+            <span class="step-number">04</span>
+            <h3>Count the friction</h3>
+            <p>
+              Mark both legs to market each day. Charge costs on actual traded
+              notional and borrow on the short leg. Compare against an uncosted
+              50/50 long-only pair.
+            </p>
+          </article>
+        </div>
+        <details class="assumptions">
+          <summary>
+            Read the assumptions &amp; limitations
+            <span aria-hidden="true">+</span>
+          </summary>
+          <div class="assumption-grid">
+            <div>
+              <h3>Data &amp; selection</h3>
+              <p>
+                Yahoo Finance adjusted closes, 2020–2024. Five familiar pairs
+                were chosen for illustration, not profitability. This small,
+                surviving universe has selection and survivorship bias. Adjusted
+                prices are a total-return proxy, not executable historical
+                quotes; dividends and corporate actions are not modeled as
+                separate cash flows.
+              </p>
+            </div>
+            <div>
+              <h3>Statistical tests</h3>
+              <p>
+                Cointegration p-values come from statsmodels' Engle–Granger test
+                with a constant and AIC lag selection, on formation log prices
+                only. The test assumes integrated price series; individual
+                unit-root tests are not enforced. P-values are unadjusted for
+                multiple testing. Imported pairs do not receive a cointegration
+                p-value.
+              </p>
+            </div>
+            <div>
+              <h3>Execution &amp; risk</h3>
+              <p>
+                Close-to-close fills assume sufficient liquidity and short
+                availability. Fee + slippage is a fixed rate per traded dollar.
+                Borrow is an assumed annual rate, charged using prior-close
+                short notional and actual calendar-day gaps / 365. No financing,
+                margin calls, taxes, impact, or cash interest. A z-score stop is
+                delayed to the next close and does not cap losses.
+              </p>
+            </div>
+            <div>
+              <h3>Evaluation</h3>
+              <p>
+                Sharpe uses daily marked equity returns, a zero risk-free rate,
+                and √252 annualization. CAGR uses 252 sessions per year. Win
+                rate counts closed trades. Final positions are forcibly closed
+                at sample end with costs. Parameter changes reuse the test
+                period; reserve a new untouched period before drawing predictive
+                conclusions.
+              </p>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section class="notes-section" id="notes" aria-labelledby="notes-title">
+        <div class="section-overline">
+          <span>03 / RESEARCH NOTES</span><span>WORK IN PROGRESS</span>
+        </div>
+        <div class="notes-layout">
+          <div>
+            <h2 id="notes-title">What I'm investigating.</h2>
+            <p>
+              A student project connecting time-series statistics, portfolio
+              accounting, and software you can inspect.
+            </p>
+          </div>
+          <div class="notebook">
+            <article>
+              <span>01</span>
+              <div>
+                <h3>Correlation isn't a trading rule.</h3>
+                <p>
+                  Two assets can move together and still drift apart for years.
+                  The formation test and the later trade outcomes answer
+                  different questions.
+                </p>
+              </div>
+            </article>
+            <article>
+              <span>02</span>
+              <div>
+                <h3>Costs matter more than the clean chart.</h3>
+                <p>
+                  Try increasing costs from 5 to 20 bps. Compare the net return,
+                  turnover, and average holding period before judging a
+                  strategy.
+                </p>
+              </div>
+            </article>
+            <article>
+              <span>03</span>
+              <div>
+                <h3>Next experiment: stability over time.</h3>
+                <p>
+                  The current model freezes one formation estimate. A future
+                  extension would refit on a walk-forward schedule and compare
+                  results across separate holdout periods.
+                </p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div>
+          <a class="footer-brand" href="#">PairLab</a
+          ><span>Built by Ayan Safe · 2026</span>
+        </div>
+        <p>
+          Historical research project. Results describe this simulation, not
+          future performance.
+        </p>
+        <a href="./data/prices.csv" download>Download price snapshot ↓</a>
+      </footer>
+    </main>
+
+    <dialog id="export-dialog" aria-labelledby="export-title">
+      <div class="dialog-heading">
+        <h2 id="export-title">Export this run</h2>
+        <button
+          class="dialog-close"
+          id="close-export"
+          type="button"
+          aria-label="Close export dialog"
+        >
+          ×
+        </button>
+      </div>
+      <p id="export-description">
+        Save the settings and results behind these charts.
+      </p>
+      <button class="download-option" id="download-trades" type="button">
+        <span
+          ><strong>Trade ledger</strong
+          ><small>Every round trip, with fees and borrow · CSV</small></span
+        ><span aria-hidden="true">↓</span></button
+      ><button class="download-option" id="download-equity" type="button">
+        <span
+          ><strong>Daily equity</strong
+          ><small>Equity, benchmark, drawdown, and position · CSV</small></span
+        ><span aria-hidden="true">↓</span></button
+      ><button class="download-option" id="download-report" type="button">
+        <span
+          ><strong>Research report</strong
+          ><small
+            >Parameters, diagnostics, metrics, and provenance · JSON</small
+          ></span
+        ><span aria-hidden="true">↓</span>
+      </button>
+    </dialog>
+    <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
+    <noscript
+      ><div class="noscript">
+        PairLab needs JavaScript to run the backtest. The
+        <a href="./data/prices.csv">historical price snapshot</a> is still
+        available.
+      </div></noscript
+    >
+  </body>
+</html>
