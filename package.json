@@ -1,0 +1,16 @@
+{
+  "name": "pairlab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A reproducible pairs trading research workbench.",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "verify": "python research/verify.py",
+    "data": "python research/prepare_data.py"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
